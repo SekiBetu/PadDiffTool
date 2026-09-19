@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>银色焊盘差异对比</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:#0f1215;color:#e7eef5;font:13.5px/1.5 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+header{padding:8px 16px;border-bottom:1px solid #2a3138;flex:0 0 auto}
+header h1{margin:0;font-size:15px;font-weight:600}
+header p{margin:3px 0 0;color:#8f9caa;font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 16px;background:#181d22;border-bottom:1px solid #2a3138;flex:0 0 auto}
+button{font:inherit;font-size:12.5px;color:#e7eef5;background:#232a31;border:1px solid #38424b;border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{background:#2b333b}
+button[aria-pressed=true]{background:#2f6df6;border-color:#2f6df6;color:#fff}
+button.addA[aria-pressed=true]{background:#a89000;border-color:#a89000;color:#fff}
+button.addB[aria-pressed=true]{background:#1e8449;border-color:#1e8449}
+button.del[aria-pressed=true]{background:#c0392b;border-color:#c0392b}
+label{font-size:12px;color:#94a3b0;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.lbl{font-size:12px;color:#94a3b0}
+.hint2{font-size:11.5px;color:#6f7c89}
+input[type=range]{width:78px;accent-color:#2f6df6}
+input[type=number]{width:60px;font:11.5px ui-monospace,Menlo,monospace;background:#11161a;color:#e7eef5;border:1px solid #38424b;border-radius:5px;padding:2px 4px}
+input[type=number]:focus{outline:1px solid #2f6df6;border-color:#2f6df6}
+.fname{font-size:11.5px;color:#7f8c99;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sep{width:1px;height:20px;background:#2a3138}
+.pill{font:11.5px ui-monospace,Menlo,monospace;color:#c2ccd6;background:#11161a;border:1px solid #38424b;border-radius:5px;padding:3px 7px;min-width:46px;text-align:center}
+.wrap{flex:1 1 auto;display:flex;min-height:0}
+.view{position:relative;flex:1 1 auto;min-width:0;background:#0b0d0f}
+canvas{display:block;width:100%;height:100%}
+#cv{touch-action:none;cursor:pointer}
+#cv.grabbing{cursor:grabbing}
+#cv.cross{cursor:crosshair}
+#cv.erase{cursor:not-allowed}
+#ov{position:absolute;left:0;top:0;pointer-events:none}
+#busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,10,12,.74);font-size:14px;color:#cfe0ff;z-index:5;text-align:center;padding:20px}
+#hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#8e9aa6;font-size:13px;line-height:2;pointer-events:none}
+.legend{position:absolute;left:12px;bottom:12px;background:rgba(14,18,22,.9);border:1px solid #2a3138;border-radius:8px;padding:8px 11px;font-size:12px;line-height:1.8;pointer-events:none;max-width:480px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+#readout{position:absolute;right:12px;bottom:12px;background:rgba(14,18,22,.9);border:1px solid #2a3138;border-radius:8px;padding:6px 10px;font:11.5px ui-monospace,Menlo,monospace;color:#9fb0c0;pointer-events:none}
+aside{flex:0 0 348px;border-left:1px solid #2a3138;background:#141a1f;display:flex;flex-direction:column;min-height:0}
+aside .hd{padding:9px 12px;border-bottom:1px solid #2a3138}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid #38424b;color:#c2ccd6;cursor:pointer;user-select:none}
+.chip.on.cB{color:#8ef2b0;border-color:#2c6b45;background:#12241a}
+.chip.on.cA{color:#ffe98a;border-color:#7a6a24;background:#2a2512}
+.chip.on.cM{color:#d9b8ff;border-color:#553088;background:#20142e}
+.chip.on.cX{color:#c2ccd6;border-color:#4a5560;background:#1d242b}
+.chip.off{opacity:.4}
+ul{list-style:none;margin:0;padding:6px;overflow:auto}
+#list{flex:1 1 auto}
+#delWrap{border-top:1px solid #2a3138;max-height:32%;display:flex;flex-direction:column}
+#delWrap .h{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:12.5px;color:#c2ccd6;cursor:pointer}
+#delList{overflow:auto}
+li{display:flex;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer;align-items:flex-start}
+li:hover{background:#1d242b}
+li.act{background:#1d2b3f;box-shadow:inset 0 0 0 1px #2f6df6}
+.badge{flex:0 0 auto;min-width:30px;height:19px;border-radius:5px;font:700 11px/19px ui-monospace,Menlo,monospace;text-align:center;color:#111;background:#555}
+li .t{font-size:12.5px;flex:1 1 auto}
+li .c{color:#94a3b0;font:11px ui-monospace,Menlo,monospace}
+.xbtn{flex:0 0 auto;border:1px solid #4a3232;background:#2a1a1a;color:#ff9a92;border-radius:5px;font-size:11px;padding:1px 6px;cursor:pointer}
+.xbtn:hover{background:#3a2020}
+.rbtn{flex:0 0 auto;border:1px solid #2c6b45;background:#12241a;color:#8ef2b0;border-radius:5px;font-size:11px;padding:1px 6px;cursor:pointer}
+.rbtn:hover{background:#17331f}
+.panel{padding:8px 12px;border-top:1px solid #2a3138;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.err{color:#ffb3ab;font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>银色焊盘差异对比</h1>
+  <p id="status">拖入两张 PNG（先拖的作「图A」，后拖的作「图B」），或点上方「选择图A / 选择图B」。</p>
+</header>
+
+<div class="bar">
+  <button id="bA">选择图A</button><span class="fname" id="fnA">未选择</span>
+  <button id="bB">选择图B</button><span class="fname" id="fnB">未选择</span>
+  <button id="bSwap">⇄ 交换 A/B</button>
+  <span class="sep"></span>
+  <button id="bPrev">◀</button><button id="bNext">▶</button>
+  <button id="bFit">适应窗口</button><button id="bFill">铺满</button><button id="bOne">1:1</button>
+  <button id="bZoomOut">−</button><span class="pill" id="zoomPct">100%</span><button id="bZoomIn">＋</button>
+  <span class="sep"></span>
+  <button id="bAuto">重新自动对齐</button>
+  <button id="bRedo">重新检测</button>
+  <button id="bReset">重置设置</button>
+  <button id="bUndo">↶ 撤销</button>
+  <button id="bClearEdit">清空手动编辑</button>
+  <button id="bPng">导出PNG</button>
+</div>
+
+<div class="bar">
+  <span class="lbl">编辑</span>
+  <button id="mSel" aria-pressed="true">🖱 选择</button>
+  <button id="mAddA" class="addA" aria-pressed="false">＋ 消失 (A)</button>
+  <button id="mAddB" class="addB" aria-pressed="false">＋ 新增 (B)</button>
+  <button id="mDel" class="del" aria-pressed="false">🗑 删除</button>
+  <span class="hint2">点一下即自动吸附该处焊盘轮廓（A 侧查图A、B 侧查图B）</span>
+</div>
+
+<div class="bar">
+  <span class="lbl">视图</span>
+  <button data-mode="side" aria-pressed="true">并排</button>
+  <button data-mode="swipe" aria-pressed="false">滑动对比</button>
+  <button data-mode="blink" aria-pressed="false">闪烁对比</button>
+  <button data-mode="diff" aria-pressed="false">差值图</button>
+</div>
+
+<div class="bar" id="setBar">
+  <span class="lbl">显示</span>
+  <label><input type="checkbox" id="cbGray" checked> 焊盘高亮</label>
+  <label>线路亮度 <input type="range" id="rgBg" min="10" max="100" step="1" value="45"><input type="number" id="nmBg" min="10" max="100" step="1" value="45">%</label>
+  <label>标记外扩 <input type="range" id="rgPad" min="0" max="60" step="1" value="20"><input type="number" id="nmPad" min="0" max="60" step="1" value="20">px</label>
+  <label>闪烁 <input type="range" id="rgBlink" min="120" max="1200" step="60" value="450"><input type="number" id="nmBlink" min="120" max="1200" step="60" value="450">ms</label>
+  <label>差值增强 <input type="range" id="rgGain" min="1" max="8" step="0.5" value="3"><input type="number" id="nmGain" min="1" max="8" step="0.5" value="3"></label>
+  <span class="sep"></span>
+  <span class="lbl">识别阈值</span>
+  <label>亮度下限 <input type="range" id="rgBr" min="80" max="245" step="5" value="170"><input type="number" id="nmBr" min="80" max="245" step="5" value="170"></label>
+  <label>饱和度上限 <input type="range" id="rgSat" min="2" max="80" step="2" value="25"><input type="number" id="nmSat" min="2" max="80" step="2" value="25"></label>
+  <label>最小面积 <input type="range" id="rgArea" min="2" max="200" step="1" value="12"><input type="number" id="nmArea" min="2" max="200" step="1" value="12"></label>
+  <label>最低填充率 <input type="range" id="rgFill" min="5" max="90" step="5" value="30"><input type="number" id="nmFill" min="5" max="90" step="5" value="30"></label>
+  <span class="sep"></span>
+  <span class="lbl">判定</span>
+  <label>重叠阈值 <input type="range" id="rgOv" min="10" max="95" step="5" value="50"><input type="number" id="nmOv" min="10" max="95" step="5" value="50">%</label>
+  <label>移动判定距离 <input type="range" id="rgMove" min="5" max="200" step="5" value="45"><input type="number" id="nmMove" min="5" max="200" step="5" value="45">px</label>
+  <span class="sep"></span>
+  <span class="lbl">对齐微调</span>
+  <label>缩放 <input type="range" id="rgK" min="-40" max="40" step="2" value="0"><input type="number" id="nmK" min="-40" max="40" step="2" value="0"></label>
+  <label>右移 <input type="range" id="rgDx" min="-40" max="40" step="1" value="0"><input type="number" id="nmDx" min="-40" max="40" step="1" value="0"></label>
+  <label>下移 <input type="range" id="rgDy" min="-40" max="40" step="1" value="0"><input type="number" id="nmDy" min="-40" max="40" step="1" value="0"></label>
+  <button id="bZeroNudge">清零微调</button>
+</div>
+
+<div class="wrap">
+  <div class="view" id="view">
+    <canvas id="cv"></canvas>
+    <canvas id="ov"></canvas>
+    <div id="busy">计算中…</div>
+    <div id="hint">把两张 PNG 拖进这个窗口<br>先拖的作「图A」，后拖的作「图B」<br>（也可以点上方按钮分别选择）</div>
+    <div class="legend" id="legend"></div>
+    <div id="readout"></div>
+  </div>
+  <aside>
+    <div class="hd">
+      <div style="font-size:13px;font-weight:600">差异清单</div>
+      <div class="chips" id="chips"><span class="chip">尚未检测</span></div>
+    </div>
+    <ul id="list"></ul>
+    <div id="delWrap">
+      <div class="h" id="delToggle">▸ 已删除 <span id="delCount">0</span> 个（点这里展开/收起）</div>
+      <ul id="delList" style="display:none"></ul>
+    </div>
+    <div class="panel"><div class="err" id="err"></div><span id="editInfo" style="color:#7f8c99;font-size:11.5px"></span></div>
+  </aside>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+function oc(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function octx(w,h){var c=oc(w,h);return [c,c.getContext('2d',{willReadFrequently:true})];}
+function tick(){return new Promise(function(r){setTimeout(r,20);});}
+function hypot(x,y){return Math.sqrt(x*x+y*y);}
+function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+function busy(m){$('busy').textContent=m;$('busy').style.display='flex';}
+function idle(){$('busy').style.display='none';}
+function setHint(t){var h=$('hint');if(t){h.innerHTML=t;h.style.display='block';}else{h.style.display='none';}}
+
+/* ===== 可调常量（其余可在界面上调） ===== */
+var COL_A='#ffe100', COL_B='#22c55e', COL_MOVED='#a855f7';
+var GAP_CSS=10;
+var MIN_HALF=8;      /* 标记半轴下限，保证极小的焊盘也看得见 */
+var AREA_RATIO=2.5;  /* 固定：远距配对允许的面积比 */
+var MAX_AREA=20000;  /* 固定：超过视为整片铜皮 */
+var SNAP_MIN=4;      /* 吸附清单的最小面积 */
+var TOGGLE_DIST=8;   /* 手动标记"同位置"判定距离（固定值，不随标记外扩变化） */
+var PAD_GROW=3;      /* 焊盘外圈（环）保持原色的外扩像素 */
+
+var S={
+  A:null,B:null,W:0,H:0,nameA:'',nameB:'',
+  auto:{scale:1,dx:0,dy:0},nudge:{k:0,dx:0,dy:0},align:{scale:1,dx:0,dy:0},mad:0,
+  mode:'side',editMode:'select',view:{s:1,tx:0,ty:0},fitCover:false,
+  grayBase:true,
+  bgLevel:0.45,        /* 线路亮度倍数（1 = 原图；越小越暗，色相不变） */
+  markPad:20,          /* 标记相对焊盘外接框的外扩像素 */
+  bright:170,satMax:0.25,minArea:12,minFill:0.30,
+  overlapMin:0.50,moveR:45,
+  cats:{onlyA:true,onlyB:true,moved:true,manual:true},
+  blinkMs:450,blinkPhase:0,gain:3,divider:0.5,
+  hover:null,
+  padsA:[],padsB:[],items:[],stat:null,active:null,
+  removed:new Set(),manual:[],undo:[],
+  pan:null,divDrag:false,computed:false
+};
+var cache={grayPadA:null,grayPadB:null,diff:null,pxA:null,pxB:null,
+           silverA:null,silverB:null,snapA:[],snapB:[],pairs:[],excluded:0,ready:false};
+var cv=$('cv'),ctx=cv.getContext('2d');
+var ov=$('ov'),octx2=ov.getContext('2d');
+var lastMs=0;
+
+function colOf(it){
+  if(it.cat==='manual') return it.side==='A'?COL_A:COL_B;
+  if(it.cat==='onlyA') return COL_A;
+  if(it.cat==='onlyB') return COL_B;
+  if(it.cat==='moved') return COL_MOVED;
+  return '#ffffff';
+}
+function manKey(m){return 'manual|'+m.side+'|'+m.seq;}
+function isVisible(it){
+  if(it.cat==='manual') return S.cats.manual&&S.cats[it.side==='A'?'onlyA':'onlyB'];
+  return !!S.cats[it.cat];
+}
+function nmA(){return S.nameA||'图A';}
+function nmB(){return S.nameB||'图B';}
+
+/* 画布上的图名：去掉扩展名；过长时截断 */
+function baseName(s){
+  if(!s)return '';
+  var i=s.lastIndexOf('.');
+  var t=(i>0)?s.slice(0,i):s;
+  return (t.length>34)?(t.slice(0,33)+'…'):t;
+}
+function lblA(){return baseName(S.nameA)||'图A';}
+function lblB(){return baseName(S.nameB)||'图B';}
+
+/* 标记半轴：贴合焊盘外接框 + 外扩量，并保证最小可见尺寸 */
+function halfX(w){return Math.max(MIN_HALF,(w||8)/2+S.markPad);}
+function halfY(h){return Math.max(MIN_HALF,(h||8)/2+S.markPad);}
+
+/* ==================== 窗格几何 / 坐标换算 ==================== */
+function paneGeom(){
+  var cw=cv.clientWidth||600;
+  if(S.mode==='side'){
+    var pw=(cw-GAP_CSS)/2;
+    return {offsets:[0,pw+GAP_CSS],paneW:pw,gap:GAP_CSS};
+  }
+  return {offsets:[0],paneW:cw,gap:0};
+}
+function paneIndexAt(mx){
+  var g=paneGeom();
+  if(g.offsets.length<2)return 0;
+  return (mx>=g.paneW+g.gap/2)?1:0;
+}
+function screenToImg(mx,my){
+  var g=paneGeom(),idx=paneIndexAt(mx),ox=g.offsets[idx];
+  return {x:(mx-ox-S.view.tx)/S.view.s,y:(my-S.view.ty)/S.view.s,pane:idx,ox:ox};
+}
+function imgToDev(ix,iy,ox){
+  var d=window.devicePixelRatio||1;
+  return {x:(ox+S.view.tx+ix*S.view.s)*d,y:(S.view.ty+iy*S.view.s)*d};
+}
+var rafPending=false;
+function requestRender(){
+  if(rafPending)return;
+  rafPending=true;
+  requestAnimationFrame(function(){rafPending=false;render();});
+}
+
+/* ==================== 载入 ==================== */
+function loadImg(file,which){
+  var im=new Image();
+  im.onload=function(){
+    if(which==='A'){
+      S.A=im;S.W=im.naturalWidth;S.H=im.naturalHeight;S.nameA=file.name;
+      $('fnA').textContent=file.name+' ('+im.naturalWidth+'×'+im.naturalHeight+')';
+    } else {
+      S.B=im;S.nameB=file.name;
+      $('fnB').textContent=file.name+' ('+im.naturalWidth+'×'+im.naturalHeight+')';
+    }
+    $('err').textContent='';scheduleStart();
+  };
+  im.onerror=function(){$('err').textContent='图片读取失败：'+file.name;};
+  im.src=URL.createObjectURL(file);
+}
+function pick(w){
+  var i=document.createElement('input');
+  i.type='file';i.accept='image/*';
+  i.onchange=function(){if(i.files[0])loadImg(i.files[0],w);};
+  i.click();
+}
+$('bA').onclick=function(){pick('A');};
+$('bB').onclick=function(){pick('B');};
+$('bSwap').onclick=async function(){
+  if(!S.A||!S.B)return;
+  var t=S.A;S.A=S.B;S.B=t;
+  var n=S.nameA;S.nameA=S.nameB;S.nameB=n;
+  S.W=S.A.naturalWidth;S.H=S.A.naturalHeight;
+  var a=$('fnA').textContent,b=$('fnB').textContent;
+  $('fnA').textContent=b;$('fnB').textContent=a;
+  $('err').textContent='已交换 图A ↔ 图B，重新检测…';
+  S.computed=false;
+  await computeAll();
+};
+var stTimer=null;
+function scheduleStart(){clearTimeout(stTimer);stTimer=setTimeout(startAll,80);}
+async function startAll(){
+  if(!S.A||!S.B){setHint('还需要另一张图：<br>图A 与图B 都选好后会自动开始。');render();return;}
+  setHint('');
+  if(!S.computed)await computeAll(); else render();
+}
+window.addEventListener('dragover',function(e){e.preventDefault();});
+window.addEventListener('drop',function(e){
+  e.preventDefault();
+  var fs=Array.prototype.slice.call(e.dataTransfer.files||[])
+           .filter(function(f){return f.type.indexOf('image/')===0;});
+  if(!fs.length)return;
+  if(fs.length>=2){loadImg(fs[0],'A');loadImg(fs[1],'B');}
+  else if(!S.A)loadImg(fs[0],'A');
+  else loadImg(fs[0],'B');
+});
+
+/* ==================== 自动对齐（四层金字塔） ==================== */
+function grayAt(img,scale){
+  var w=Math.max(8,Math.round(S.W*scale)),h=Math.max(8,Math.round(S.H*scale));
+  var t=octx(w,h),x=t[1];
+  x.drawImage(img,0,0,w,h);
+  var d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);
+  for(var i=0,p=0;i<g.length;i++,p+=4)g[i]=d[p]*0.299+d[p+1]*0.587+d[p+2]*0.114;
+  return {g:g,w:w,h:h};
+}
+function sampNN(G,x,y){
+  if(!(x>=0&&y>=0&&x<=G.w-1&&y<=G.h-1))return -1;
+  return G.g[(y|0)*G.w+(x|0)];
+}
+function sampBL(G,x,y){
+  if(!(x>=0&&y>=0&&x<=G.w-1&&y<=G.h-1))return -1;
+  var x0=x|0,y0=y|0,x1=x0<G.w-1?x0+1:x0,y1=y0<G.h-1?y0+1:y0,fx=x-x0,fy=y-y0;
+  var g=G.g,w=G.w;
+  var a=g[y0*w+x0],b=g[y0*w+x1],c=g[y1*w+x0],d=g[y1*w+x1];
+  return (a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy;
+}
+function cost(GA,GB,s,dx,dy,step,bl){
+  var w=GA.w,h=GA.h,inv=1/s;
+  var x0=Math.floor(w*0.10),x1=Math.ceil(w*0.90),y0=Math.floor(h*0.10),y1=Math.ceil(h*0.90);
+  var sum=0,cnt=0;
+  for(var y=y0;y<y1;y+=step){
+    var row=y*w;
+    for(var x=x0;x<x1;x+=step){
+      var v=bl?sampBL(GB,(x-dx)*inv,(y-dy)*inv):sampNN(GB,(x-dx)*inv,(y-dy)*inv);
+      if(v<0)continue;
+      sum+=Math.abs(GA.g[row+x]-v);cnt++;
+    }
+  }
+  return cnt?sum/cnt:1e9;
+}
+function search(GA,GB,sList,dxC,dyC,rng,step,bl){
+  var best={c:1e9,s:sList[0],dx:dxC,dy:dyC};
+  for(var si=0;si<sList.length;si++){
+    var s=sList[si];
+    for(var dy=dyC-rng;dy<=dyC+rng;dy++){
+      for(var dx=dxC-rng;dx<=dxC+rng;dx++){
+        var c=cost(GA,GB,s,dx,dy,step,bl);
+        if(c<best.c)best={c:c,s:s,dx:dx,dy:dy};
+      }
+    }
+  }
+  return best;
+}
+async function autoAlign(){
+  if(!S.A||!S.B)return;
+  var t0=performance.now();
+  busy('① 自动对齐：粗搜（1/16）…');await tick();
+  var A16=grayAt(S.A,1/16),B16=grayAt(S.B,1/16);
+  var sl=[];
+  for(var s=0.88;s<=1.121;s+=0.02)sl.push(+s.toFixed(3));
+  var b0=search(A16,B16,sl,0,0,3,2,false);
+
+  busy('② 自动对齐：精修（1/4）…');await tick();
+  var A4=grayAt(S.A,1/4),B4=grayAt(S.B,1/4);
+  var sl2=[];
+  for(var s2=b0.s-0.020;s2<=b0.s+0.0201;s2+=0.005)sl2.push(+s2.toFixed(4));
+  var b1=search(A4,B4,sl2,Math.round(b0.dx*4),Math.round(b0.dy*4),3,1,true);
+
+  var big=S.W*S.H>2.5e6, lvl=big?2:1;
+  busy('③ 自动对齐：细化（1/'+(big?'2':'1')+'）…');await tick();
+  var AL=grayAt(S.A,1/lvl),BL=grayAt(S.B,1/lvl);
+  var sl3=[b1.s-0.004,b1.s-0.002,b1.s,b1.s+0.002,b1.s+0.004];
+  var b2=search(AL,BL,sl3,Math.round(b1.dx*lvl),Math.round(b1.dy*lvl),3,1,true);
+
+  S.auto={scale:b2.s*(S.W/S.B.naturalWidth),dx:b2.dx/lvl,dy:b2.dy/lvl};
+  S.mad=b2.c;
+  lastMs+=performance.now()-t0;
+}
+function applyNudge(){
+  var k=1+S.nudge.k,a=S.auto;
+  S.align={scale:k*a.scale,dx:k*a.dx+S.nudge.dx,dy:k*a.dy+S.nudge.dy};
+}
+
+/* ==================== 形态学 ==================== */
+function dilateR(m,W,H,r){
+  if(r<1)return m;
+  var t=new Uint8Array(W*H),o=new Uint8Array(W*H),x,y,c,add,rem,row,e;
+  for(y=0;y<H;y++){
+    row=y*W;c=0;e=Math.min(r,W-1);
+    for(x=0;x<=e;x++)if(m[row+x])c++;
+    for(x=0;x<W;x++){t[row+x]=c?1:0;add=x+r+1;if(add<W&&m[row+add])c++;rem=x-r;if(rem>=0&&m[row+rem])c--;}
+  }
+  for(x=0;x<W;x++){
+    c=0;e=Math.min(r,H-1);
+    for(y=0;y<=e;y++)if(t[y*W+x])c++;
+    for(y=0;y<H;y++){o[y*W+x]=c?1:0;add=y+r+1;if(add<H&&t[add*W+x])c++;rem=y-r;if(rem>=0&&t[rem*W+x])c--;}
+  }
+  return o;
+}
+function erodeR(m,W,H,r){
+  if(r<1)return m;
+  var inv=new Uint8Array(W*H),i;
+  for(i=0;i<inv.length;i++)inv[i]=m[i]?0:1;
+  var d=dilateR(inv,W,H,r);
+  for(i=0;i<d.length;i++)d[i]=d[i]?0:1;
+  return d;
+}
+function closeR(m,W,H,r){return erodeR(dilateR(m,W,H,r),W,H,r);}
+function holeFill(m,W,H){
+  var N=W*H,bg=new Uint8Array(N),stk=new Int32Array(N),top=0,x,y,i;
+  function push(q){if(q>=0&&q<N&&!bg[q]&&!m[q]){bg[q]=1;stk[top++]=q;}}
+  for(x=0;x<W;x++){push(x);push((H-1)*W+x);}
+  for(y=0;y<H;y++){push(y*W);push(y*W+W-1);}
+  while(top>0){
+    var p=stk[--top],px=p%W,py=(p-px)/W;
+    if(px>0)push(p-1); if(px<W-1)push(p+1);
+    if(py>0)push(p-W); if(py<H-1)push(p+W);
+  }
+  var out=new Uint8Array(N);
+  for(i=0;i<N;i++)out[i]=m[i]?1:(bg[i]?0:1);
+  return out;
+}
+function labelComp(m,W,H){
+  var N=W*H,lab=new Int32Array(N),q=new Int32Array(N),comps=[],n=0,start;
+  for(start=0;start<N;start++){
+    if(!m[start]||lab[start])continue;
+    n++;
+    var head=0,tail=0;q[tail++]=start;lab[start]=n;
+    var cnt=0,sx=0,sy=0,minx=1e9,maxx=-1,miny=1e9,maxy=-1;
+    while(head<tail){
+      var p=q[head++],x=p%W,y=(p-x)/W;
+      cnt++;sx+=x;sy+=y;
+      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+      if(x>0){var a=p-1;if(m[a]&&!lab[a]){lab[a]=n;q[tail++]=a;}}
+      if(x<W-1){var b=p+1;if(m[b]&&!lab[b]){lab[b]=n;q[tail++]=b;}}
+      if(y>0){var c=p-W;if(m[c]&&!lab[c]){lab[c]=n;q[tail++]=c;}}
+      if(y<H-1){var d=p+W;if(m[d]&&!lab[d]){lab[d]=n;q[tail++]=d;}}
+    }
+    comps.push({x:sx/cnt,y:sy/cnt,area:cnt,minx:minx,miny:miny,maxx:maxx,maxy:maxy,
+                w:maxx-minx+1,h:maxy-miny+1});
+  }
+  return {lab:lab,comps:comps,n:n};
+}
+function mergePads(list,dist){
+  list.sort(function(a,b){return b.area-a.area;});
+  var cell=Math.max(4,dist*2),grid=new Map(),out=[];
+  function key(cx,cy){return cx+'_'+cy;}
+  for(var i=0;i<list.length;i++){
+    var it=list[i];
+    var cx=Math.floor(it.x/cell),cy=Math.floor(it.y/cell),hit=null;
+    for(var gx=cx-1;gx<=cx+1&&!hit;gx++){
+      for(var gy=cy-1;gy<=cy+1&&!hit;gy++){
+        var arr=grid.get(key(gx,gy));
+        if(!arr)continue;
+        for(var j=0;j<arr.length;j++){
+          var q=arr[j];
+          if(hypot(it.x-q.x,it.y-q.y)<=dist){hit=q;break;}
+        }
+      }
+    }
+    if(hit){
+      var T=hit.area+it.area;
+      hit.x=(hit.x*hit.area+it.x*it.area)/T;
+      hit.y=(hit.y*hit.area+it.y*it.area)/T;
+      hit.area=T;
+      hit.minx=Math.min(hit.minx,it.minx);hit.maxx=Math.max(hit.maxx,it.maxx);
+      hit.miny=Math.min(hit.miny,it.miny);hit.maxy=Math.max(hit.maxy,it.maxy);
+      hit.w=hit.maxx-hit.minx+1;hit.h=hit.maxy-hit.miny+1;
+    } else {
+      var node={x:it.x,y:it.y,area:it.area,w:it.w,h:it.h,
+                minx:it.minx,miny:it.miny,maxx:it.maxx,maxy:it.maxy};
+      out.push(node);
+      var k=key(cx,cy);
+      if(!grid.has(k))grid.set(k,[]);
+      grid.get(k).push(node);
+    }
+  }
+  return out;
+}
+
+/* ==================== 银色焊盘识别 ==================== */
+function analyze(canvas,W,H){
+  var C=canvas.getContext('2d',{willReadFrequently:true});
+  var d=C.getImageData(0,0,W,H).data,N=W*H,i,p;
+  var mask=new Uint8Array(N);
+  var bMin=S.bright,sMax=S.satMax;
+  for(i=0,p=0;i<N;i++,p+=4){
+    var r=d[p],g=d[p+1],b=d[p+2];
+    var mx=r>g?(r>b?r:b):(g>b?g:b);
+    var mn=r<g?(r<b?r:b):(g<b?g:b);
+    if(mx<bMin)continue;
+    var sat=mx?(mx-mn)/mx:0;
+    if(sat>sMax)continue;
+    mask[i]=1;
+  }
+  /* silver：闭运算 + 填孔后的原始银色掩膜（用于"保持亮度"，不受识别阈值过滤影响） */
+  var silver=holeFill(closeR(mask,W,H,1),W,H);
+  /* show：向外扩 PAD_GROW px，让焊盘外圈的环（蓝色/青色）也保持原色 */
+  var show=dilateR(silver,W,H,PAD_GROW);
+  var L=labelComp(silver,W,H);
+
+  /* ① 吸附清单：未经过滤的全部连通域（面积 ≥ SNAP_MIN） */
+  var snap=[];
+  for(i=0;i<L.comps.length;i++){
+    var sc=L.comps[i];
+    if(sc.area<SNAP_MIN)continue;
+    snap.push({x:sc.x,y:sc.y,area:sc.area,minx:sc.minx,miny:sc.miny,maxx:sc.maxx,maxy:sc.maxy});
+  }
+
+  /* ② 焊盘节点：过滤 + 3px 合并 */
+  var kept=[];
+  for(i=0;i<L.comps.length;i++){
+    var c=L.comps[i];
+    if(c.area<S.minArea||c.area>MAX_AREA)continue;
+    if(c.area/(c.w*c.h)<S.minFill)continue;
+    kept.push(c);
+  }
+  var nodes=mergePads(kept,3.0);
+
+  /* ③ 原始连通域 → 最近节点（对象索引映射，避免平行数组错位） */
+  var compIndex=new Map();
+  for(i=0;i<L.comps.length;i++)compIndex.set(L.comps[i],i+1);
+  var idx=new Int32Array(L.comps.length+1);
+  var cell=16,grid=new Map();
+  function gk(a,b){return a+'_'+b;}
+  for(i=0;i<nodes.length;i++){
+    var k=gk(Math.floor(nodes[i].x/cell),Math.floor(nodes[i].y/cell));
+    if(!grid.has(k))grid.set(k,[]);
+    grid.get(k).push(i+1);
+  }
+  for(i=0;i<kept.length;i++){
+    var comp=kept[i];
+    var ci=compIndex.get(comp);
+    if(!ci)continue;
+    var bx=Math.floor(comp.x/cell),by=Math.floor(comp.y/cell),best=0,bd=1e9;
+    for(var gx=bx-1;gx<=bx+1;gx++)for(var gy=by-1;gy<=by+1;gy++){
+      var arr=grid.get(gk(gx,gy));
+      if(!arr)continue;
+      for(var q=0;q<arr.length;q++){
+        var ni=arr[q]-1,dd=hypot(nodes[ni].x-comp.x,nodes[ni].y-comp.y);
+        if(dd<bd){bd=dd;best=arr[q];}
+      }
+    }
+    idx[ci]=best;
+  }
+
+  var lab=new Int32Array(N),padMask=new Uint8Array(N);
+  for(i=0;i<N;i++){
+    var t=L.lab[i];
+    if(!t)continue;
+    var v=idx[t];
+    if(v){lab[i]=v;padMask[i]=1;}
+  }
+  return {pads:nodes,lab:lab,padMask:padMask,px:d,snap:snap,silver:show};
+}
+
+/* ==================== 标签重映射（保留顺序的子序列） ==================== */
+function mapLabSeq(srcLab,srcPads,kept,dst){
+  var idx=new Int32Array(srcPads.length+1);
+  var j=0;
+  for(var k=0;k<kept.length;k++){
+    while(j<srcPads.length&&srcPads[j]!==kept[k])j++;
+    if(j>=srcPads.length)break;
+    idx[j+1]=k+1;j++;
+  }
+  var N=srcLab.length;
+  for(var p=0;p<N;p++){
+    var t=srcLab[p];
+    if(!t)continue;
+    var v=idx[t];
+    if(v)dst[p]=v;
+  }
+}
+
+/* ==================== 像素重叠统计 ==================== */
+function overlapPairs(labA,labB,W,H,roi,nA,nB){
+  var out=[],a,b;
+  if(!nA||!nB)return out;
+  var stride=nB+1,prod=(nA+1)*stride;
+  if(prod<=40e6){
+    var cnt=new Int32Array(prod);
+    var bmin=new Int32Array(nA+1),bmax=new Int32Array(nA+1);
+    for(a=0;a<=nA;a++)bmin[a]=-1;
+    for(var y=roi[1];y<roi[3];y++){
+      var p=y*W+roi[0];
+      for(var x=roi[0];x<roi[2];x++,p++){
+        a=labA[p]; if(!a)continue;
+        b=labB[p]; if(!b)continue;
+        cnt[a*stride+b]++;
+        if(bmin[a]<0||b<bmin[a])bmin[a]=b;
+        if(b>bmax[a])bmax[a]=b;
+      }
+    }
+    for(a=1;a<=nA;a++){
+      if(bmin[a]<0)continue;
+      for(b=bmin[a];b<=bmax[a];b++){
+        var c=cnt[a*stride+b];
+        if(c>0)out.push({ai:a-1,bj:b-1,n:c});
+      }
+    }
+  } else {
+    var map=new Map();
+    for(var y2=roi[1];y2<roi[3];y2++){
+      var p2=y2*W+roi[0];
+      for(var x2=roi[0];x2<roi[2];x2++,p2++){
+        var a2=labA[p2]; if(!a2)continue;
+        var b2=labB[p2]; if(!b2)continue;
+        var k2=a2*3000000+b2;
+        map.set(k2,(map.get(k2)||0)+1);
+      }
+    }
+    map.forEach(function(c,k){
+      var bb=k%3000000,aa=(k-bb)/3000000;
+      out.push({ai:aa-1,bj:bb-1,n:c});
+    });
+  }
+  return out;
+}
+
+/* ==================== 主计算 ==================== */
+async function compute(){
+  if(!S.A||!S.B)return;
+  var W=S.W,H=S.H,al=S.align;
+  var t0=performance.now();
+
+  busy('① 识别「图A」的银色焊盘…');await tick();
+  var ac=oc(W,H),ax=ac.getContext('2d',{willReadFrequently:true});
+  ax.drawImage(S.A,0,0,W,H);
+  var ra=analyze(ac,W,H);
+
+  busy('② 对齐「图B」并识别焊盘…');await tick();
+  var bc=oc(W,H),bx=bc.getContext('2d',{willReadFrequently:true});
+  bx.fillStyle='#000';bx.fillRect(0,0,W,H);
+  bx.setTransform(al.scale,0,0,al.scale,al.dx,al.dy);
+  bx.drawImage(S.B,0,0);
+  bx.setTransform(1,0,0,1,0,0);
+  var rb=analyze(bc,W,H);
+
+  var bw=S.B.naturalWidth,bh=S.B.naturalHeight,mrg=10;
+  var roi=[
+    Math.max(0,Math.floor(al.dx)+mrg),
+    Math.max(0,Math.floor(al.dy)+mrg),
+    Math.min(W,Math.ceil(al.dx+bw*al.scale)-mrg),
+    Math.min(H,Math.ceil(al.dy+bh*al.scale)-mrg)
+  ];
+  function inR(q){return q.x>=roi[0]&&q.x<=roi[2]&&q.y>=roi[1]&&q.y<=roi[3];}
+  var pa=ra.pads.filter(inR),pb=rb.pads.filter(inR);
+  cache.excluded=(ra.pads.length-pa.length)+(rb.pads.length-pb.length);
+  S.padsA=pa;S.padsB=pb;
+  cache.snapA=ra.snap;cache.snapB=rb.snap;
+  cache.silverA=ra.silver;cache.silverB=rb.silver;
+  cache.pxA=ra.px;cache.pxB=rb.px;
+
+  busy('③ 统计像素重叠…');await tick();
+  var labA=new Int32Array(W*H),labB=new Int32Array(W*H);
+  mapLabSeq(ra.lab,ra.pads,pa,labA);
+  mapLabSeq(rb.lab,rb.pads,pb,labB);
+  cache.pairs=overlapPairs(labA,labB,W,H,roi,pa.length,pb.length);
+  labA=null;labB=null;
+
+  busy('④ 配对（重叠率 → 就近配对）…');await tick();
+  buildItems();
+
+  busy('⑤ 生成高亮底图与差值图…');await tick();
+  buildDerived();
+
+  lastMs=performance.now()-t0;
+  idle();
+}
+
+/* ==================== 配对：保持 v6 语义 ==================== */
+function buildItems(){
+  var A=S.padsA,B=S.padsB,n=A.length,m=B.length;
+  var src=cache.pairs||[];
+  var list=[];
+  for(var i=0;i<src.length;i++){
+    var p=src[i],a=A[p.ai],b=B[p.bj];
+    if(!a||!b)continue;
+    list.push({ai:p.ai,bj:p.bj,r:p.n/Math.min(a.area,b.area)});
+  }
+  /* 第一轮：像素重叠率 → 视为同一焊盘 */
+  list.sort(function(u,v){return v.r-u.r;});
+  var ua=new Uint8Array(n),ub=new Uint8Array(m),same=0;
+  for(i=0;i<list.length;i++){
+    var q=list[i];
+    if(q.r<S.overlapMin)break;
+    if(ua[q.ai]||ub[q.bj])continue;
+    ua[q.ai]=1;ub[q.bj]=1;same++;
+  }
+  var restA=[],restB=[];
+  for(i=0;i<n;i++)if(!ua[i])restA.push(i);
+  for(var j=0;j<m;j++)if(!ub[j])restB.push(j);
+
+  /* 第二轮：就近配对 → 判为「移动」（同一个焊盘换了位置，只标一个） */
+  var items=[],usedB={};
+  for(i=0;i<restA.length;i++){
+    var ai=restA[i],best=-1,bd=1e9;
+    for(j=0;j<restB.length;j++){
+      var bj=restB[j];
+      if(usedB[bj])continue;
+      var dx=B[bj].x-A[ai].x,dy=B[bj].y-A[ai].y;
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d>S.moveR)continue;
+      var ar=A[ai].area,br=B[bj].area;
+      var rr=Math.max(ar,br)/Math.min(ar,br);
+      if(rr>AREA_RATIO)continue;
+      if(d<bd){bd=d;best=bj;}
+    }
+    if(best>=0){
+      usedB[best]=1;
+      items.push({cat:'moved',x:A[ai].x,y:A[ai].y,bx:B[best].x,by:B[best].y,dist:bd,
+        area:A[ai].area,areaB:B[best].area,
+        w:A[ai].w,h:A[ai].h,wb:B[best].w,hb:B[best].h});
+    } else {
+      items.push({cat:'onlyA',x:A[ai].x,y:A[ai].y,area:A[ai].area,w:A[ai].w,h:A[ai].h});
+    }
+  }
+  for(j=0;j<restB.length;j++){
+    if(usedB[restB[j]])continue;
+    var bj2=restB[j];
+    items.push({cat:'onlyB',x:B[bj2].x,y:B[bj2].y,area:B[bj2].area,w:B[bj2].w,h:B[bj2].h});
+  }
+  items.sort(function(p,q){return (p.y-q.y)||(p.x-q.x);});
+  items.forEach(function(it,k){it.id=k+1;it.key=it.cat+'|'+Math.round(it.x)+'|'+Math.round(it.y);});
+  S.items=items;
+  var st={nA:n,nB:m,same:same,moved:0,onlyA:0,onlyB:0};
+  items.forEach(function(it){
+    if(it.cat==='moved')st.moved++;
+    else if(it.cat==='onlyA')st.onlyA++;
+    else st.onlyB++;
+  });
+  S.stat=st;
+}
+
+/* ==================== 高亮底图（焊盘原色 + 线路保留原色压暗） / 差值图 ==================== */
+function buildDerived(){
+  var W=S.W,H=S.H,N=W*H;
+  var pxA=cache.pxA,pxB=cache.pxB,sA=cache.silverA,sB=cache.silverB;
+  if(!pxA||!pxB||!sA||!sB)return;
+  var ia=new ImageData(W,H),ib=new ImageData(W,H),idf=new ImageData(W,H);
+  var da=ia.data,db=ib.data,dd=idf.data;
+  var dim=S.bgLevel,gain=S.gain;
+  for(var i=0,p=0;i<N;i++,p+=4){
+    var ar=pxA[p],ag=pxA[p+1],ab=pxA[p+2];
+    var br=pxB[p],bg=pxB[p+1],bb=pxB[p+2];
+    /* 焊盘（含外圈）：保留原始颜色（满亮度） */
+    if(sA[i]){da[p]=ar;da[p+1]=ag;da[p+2]=ab;}
+    else{da[p]=ar*dim;da[p+1]=ag*dim;da[p+2]=ab*dim;}   /* 线路：各通道同乘，色相不变 */
+    da[p+3]=255;
+    if(sB[i]){db[p]=br;db[p+1]=bg;db[p+2]=bb;}
+    else{db[p]=br*dim;db[p+1]=bg*dim;db[p+2]=bb*dim;}
+    db[p+3]=255;
+    /* 差值图：用灰度差的绝对值，与原亮度无关 */
+    var av=ar*0.299+ag*0.587+ab*0.114;
+    var bv=br*0.299+bg*0.587+bb*0.114;
+    var dv=Math.abs(av-bv)*gain; if(dv>255)dv=255;
+    dd[p]=dv;dd[p+1]=dv;dd[p+2]=dv;dd[p+3]=255;
+  }
+  var c1=oc(W,H);c1.getContext('2d').putImageData(ia,0,0);cache.grayPadA=c1;
+  var c2=oc(W,H);c2.getContext('2d').putImageData(ib,0,0);cache.grayPadB=c2;
+  var c3=oc(W,H);c3.getContext('2d').putImageData(idf,0,0);cache.diff=c3;
+  cache.ready=true;
+}
+/* 只重建高亮底图（改线路亮度时用，节流） */
+var bakedTimer=null;
+function scheduleBaked(){
+  if(bakedTimer)clearTimeout(bakedTimer);
+  bakedTimer=setTimeout(function(){bakedTimer=null;buildDerived();render();},70);
+}
+function rebuildDiff(){
+  var W=S.W,H=S.H,N=W*H;
+  var pxA=cache.pxA,pxB=cache.pxB;
+  if(!pxA||!pxB)return;
+  var idf=new ImageData(W,H),dd=idf.data,gain=S.gain;
+  for(var i=0,p=0;i<N;i++,p+=4){
+    var av=pxA[p]*0.299+pxA[p+1]*0.587+pxA[p+2]*0.114;
+    var bv=pxB[p]*0.299+pxB[p+1]*0.587+pxB[p+2]*0.114;
+    var dv=Math.abs(av-bv)*gain; if(dv>255)dv=255;
+    dd[p]=dv;dd[p+1]=dv;dd[p+2]=dv;dd[p+3]=255;
+  }
+  var c=oc(W,H);c.getContext('2d').putImageData(idf,0,0);cache.diff=c;
+}
+
+/* ==================== 变换与背景绘制 ==================== */
+function setM(ox,oy,useAlign){
+  var d=window.devicePixelRatio||1,s=S.view.s;
+  var k=useAlign?S.align.scale:1;
+  var dx=useAlign?S.align.dx:0,dy=useAlign?S.align.dy:0;
+  ctx.setTransform(d*s*k,0,0,d*s*k,d*(ox+S.view.tx+s*dx),d*(oy+S.view.ty+s*dy));
+}
+function unitT(){ctx.setTransform(1,0,0,1,0,0);}
+
+/* 底图：勾选"焊盘高亮"时用已压暗的底图；否则显示原图 */
+function bgA(ox,alpha){
+  if(alpha===undefined)alpha=1;
+  setM(ox,0,false);
+  var a0=ctx.globalAlpha;
+  ctx.globalAlpha=a0*alpha;
+  if(S.grayBase&&cache.grayPadA)ctx.drawImage(cache.grayPadA,0,0);
+  else ctx.drawImage(S.A,0,0,S.W,S.H);
+  ctx.globalAlpha=a0;
+}
+function bgB(ox,alpha){
+  if(alpha===undefined)alpha=1;
+  if(S.grayBase&&cache.grayPadB)setM(ox,0,false);
+  else setM(ox,0,true);
+  var a0=ctx.globalAlpha;
+  ctx.globalAlpha=a0*alpha;
+  if(S.grayBase&&cache.grayPadB)ctx.drawImage(cache.grayPadB,0,0);
+  else ctx.drawImage(S.B,0,0);
+  ctx.globalAlpha=a0;
+}
+
+function allItems(){
+  var out=[];
+  S.items.forEach(function(it){ if(!S.removed.has(it.key))out.push(it); });
+  S.manual.forEach(function(m){
+    var key=manKey(m);
+    if(S.removed.has(key))return;
+    out.push({cat:'manual',side:m.side,seq:m.seq,label:m.side+m.seq,
+              x:m.x,y:m.y,w:m.w,h:m.h,key:key});
+  });
+  return out;
+}
+/* 形状：长宽比 > 3.2 用矩形，否则椭圆 */
+function markShape(c,x,y,rx,ry){
+  c.beginPath();
+  if(rx>0&&ry>0&&Math.max(rx,ry)/Math.min(rx,ry)>3.2) c.rect(x-rx,y-ry,rx*2,ry*2);
+  else c.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2);
+}
+function rectOverlap(a,b){
+  return !(a.x+a.w<b.x||b.x+b.w<a.x||a.y+a.h<b.y||b.y+b.h<a.y);
+}
+function placeLabel(c,cx,cy,r,txt,k,placed){
+  var tw=c.measureText(txt).width,th=13*k,pad=2.5*k;
+  var scales=[1,1.7,2.4,3.2,4.2];
+  for(var s=0;s<scales.length;s++){
+    var R=r*scales[s]+4*k;
+    var cands=[
+      [cx+R,cy-R*0.8-2*k],[cx+R,cy+R*0.9+th*0.5],
+      [cx-R-tw,cy-R*0.8-2*k],[cx-R-tw,cy+R*0.9+th*0.5],
+      [cx-tw/2,cy-R-6*k],[cx-tw/2,cy+R+th+6*k],
+      [cx+R,cy+th*0.35],[cx-R-tw,cy+th*0.35]
+    ];
+    for(var i=0;i<cands.length;i++){
+      var x=cands[i][0],y=cands[i][1];
+      var box={x:x-pad,y:y-th*0.78-pad,w:tw+2*pad,h:th+2*pad};
+      var ok=true;
+      for(var j=0;j<placed.length;j++){if(rectOverlap(box,placed[j])){ok=false;break;}}
+      if(ok){placed.push(box);return {x:x,y:y};}
+    }
+  }
+  var fx=cx+r+4*k,fy=cy-r-4*k;
+  placed.push({x:fx,y:fy,w:tw,h:th});
+  return {x:fx,y:fy};
+}
+function drawMarksIn(c,k){
+  var vis=[],i;
+  allItems().forEach(function(it){ if(isVisible(it))vis.push(it); });
+  if(!vis.length)return;
+
+  /* 「移动」：虚线连到新位置，并用图B 的外接框画目标轮廓 */
+  for(i=0;i<vis.length;i++){
+    var it0=vis[i];
+    if(it0.cat!=='moved')continue;
+    c.save();
+    c.setLineDash([5*k,4*k]);
+    c.strokeStyle='rgba(168,85,247,.8)';
+    c.lineWidth=1.6*k;
+    c.beginPath();c.moveTo(it0.x,it0.y);c.lineTo(it0.bx,it0.by);c.stroke();
+    c.restore();
+    markShape(c,it0.bx,it0.by,halfX(it0.wb),halfY(it0.hb));
+    c.strokeStyle=COL_MOVED;c.lineWidth=2.2*k;c.stroke();
+  }
+
+  c.font='700 '+(13*k)+'px ui-monospace,Menlo,monospace';
+  c.textBaseline='alphabetic';
+  var placed=[];
+  for(i=0;i<vis.length;i++){
+    var t=vis[i];
+    var rx=halfX(t.w),ry=halfY(t.h);
+    markShape(c,t.x,t.y,rx,ry);
+    c.strokeStyle=colOf(t);
+    c.lineWidth=(S.active===t.key?4:2.2)*k;
+    c.stroke();
+    var lbl=(t.cat==='manual')?t.label:String(t.id);
+    var pos=placeLabel(c,t.x,t.y,Math.max(rx,ry),lbl,k,placed);
+    c.lineWidth=3.4*k;c.strokeStyle='#000';c.strokeText(lbl,pos.x,pos.y);
+    c.fillStyle='#fff';c.fillText(lbl,pos.x,pos.y);
+  }
+}
+function drawMarks(){drawMarksIn(ctx,1/S.view.s);}
+function render(){
+  var d=window.devicePixelRatio||1;
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  var pw=Math.round(cw*d),ph=Math.round(ch*d);
+  if(cv.width!==pw||cv.height!==ph){cv.width=pw;cv.height=ph;}
+  if(ov.width!==pw||ov.height!==ph){ov.width=pw;ov.height=ph;}
+  unitT();ctx.fillStyle='#0b0d0f';ctx.fillRect(0,0,pw,ph);
+  updateReadout();
+  if(!cache.ready){drawOverlay();return;}
+  ctx.imageSmoothingEnabled=S.view.s<1.3;
+
+  if(S.mode==='side'){
+    var gap=GAP_CSS*d,pane=(pw-gap)/2;
+    ctx.save();unitT();ctx.beginPath();ctx.rect(0,0,pane,ph);ctx.clip();
+    ctx.fillStyle='#000';ctx.fillRect(0,0,pane,ph);
+    bgA(0);drawMarks();ctx.restore();
+    ctx.save();unitT();ctx.beginPath();ctx.rect(pane+gap,0,pane,ph);ctx.clip();
+    ctx.fillStyle='#000';ctx.fillRect(pane+gap,0,pane,ph);
+    bgB((pane+gap)/d);drawMarks();ctx.restore();
+    unitT();
+    ctx.strokeStyle='#2a3138';ctx.lineWidth=2*d;
+    ctx.beginPath();ctx.moveTo(pane+gap/2,0);ctx.lineTo(pane+gap/2,ph);ctx.stroke();
+    ctx.font='600 '+(12.5*d)+'px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle='#93a2b2';
+    ctx.fillText(lblA(),8*d,19*d);
+    ctx.fillText(lblB(),pane+gap+8*d,19*d);
+    drawOverlay();return;
+  }
+  if(S.mode==='swipe'){
+    unitT();ctx.fillStyle='#000';ctx.fillRect(0,0,pw,ph);
+    bgB(0);
+    var dx2=S.divider*pw;
+    ctx.save();unitT();ctx.beginPath();ctx.rect(0,0,dx2,ph);ctx.clip();
+    ctx.fillStyle='#000';ctx.fillRect(0,0,pw,ph);
+    bgA(0);ctx.restore();
+    setM(0,0,false);drawMarks();
+    unitT();
+    ctx.strokeStyle='#2f6df6';ctx.lineWidth=2*d;
+    ctx.beginPath();ctx.moveTo(dx2,0);ctx.lineTo(dx2,ph);ctx.stroke();
+    ctx.font='600 '+(12.5*d)+'px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle='#93a2b2';
+    ctx.fillText(lblA(),8*d,19*d);
+    if(dx2+8*d<pw)ctx.fillText(lblB(),dx2+8*d,19*d);
+    drawOverlay();return;
+  }
+  if(S.mode==='blink'){
+    if(S.blinkPhase===1){unitT();ctx.fillStyle='#000';ctx.fillRect(0,0,pw,ph);bgB(0);}
+    else bgA(0);
+    setM(0,0,false);drawMarks();
+    drawOverlay();return;
+  }
+  if(S.mode==='diff'){
+    setM(0,0,false);ctx.drawImage(cache.diff,0,0);drawMarks();
+    drawOverlay();return;
+  }
+}
+function drawOverlay(){
+  var d=window.devicePixelRatio||1;
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  var pw=Math.round(cw*d),ph=Math.round(ch*d);
+  if(ov.width!==pw||ov.height!==ph){ov.width=pw;ov.height=ph;}
+  octx2.setTransform(1,0,0,1,0,0);
+  octx2.clearRect(0,0,ov.width,ov.height);
+  if(!(S.editMode==='addA'||S.editMode==='addB')||!S.hover)return;
+  var g=paneGeom(),ox=g.offsets[S.hover.pane||0];
+  var s0=imgToDev(S.hover.x,S.hover.y,ox);
+  var rx=halfX(S.hover.w)*S.view.s*d;
+  var ry=halfY(S.hover.h)*S.view.s*d;
+  octx2.beginPath();
+  if(Math.max(rx,ry)/Math.min(rx,ry)>3.2) octx2.rect(s0.x-rx,s0.y-ry,rx*2,ry*2);
+  else octx2.ellipse(s0.x,s0.y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2);
+  octx2.fillStyle='rgba(255,255,255,.10)';octx2.fill();
+  octx2.setLineDash([6*d,4*d]);
+  octx2.strokeStyle=(S.editMode==='addA')?COL_A:COL_B;
+  octx2.lineWidth=2.2*d;octx2.stroke();
+  octx2.setLineDash([]);
+}
+function updateReadout(){
+  var pct=Math.round(S.view.s*100);
+  var el=$('readout');
+  var txt='缩放 '+pct+'%　外扩 '+S.markPad+'px　线路亮度 '+Math.round(S.bgLevel*100)+'%';
+  if(el.textContent!==txt)el.textContent=txt;
+  var zp=$('zoomPct');
+  if(zp.textContent!==pct+'%')zp.textContent=pct+'%';
+}
+
+/* ==================== 视图控制 ==================== */
+function fit(cover){
+  if(typeof cover==='boolean')S.fitCover=cover;
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  if(!S.A)return;
+  var pane=(S.mode==='side')?(cw-GAP_CSS)/2:cw;
+  var s=S.fitCover?Math.max(pane/S.W,ch/S.H):Math.min(pane/S.W,ch/S.H)*0.98;
+  S.view.s=s;S.view.tx=(pane-S.W*s)/2;S.view.ty=(ch-S.H*s)/2;
+  render();
+}
+function zoomAt(cx,cy,f){
+  var g=paneGeom(),idx=paneIndexAt(cx),ox=g.offsets[idx];
+  var lx=cx-ox;
+  var s0=S.view.s,s=clamp(s0*f,0.05,40);
+  var wx=(lx-S.view.tx)/s0,wy=(cy-S.view.ty)/s0;
+  S.view.s=s;S.view.tx=lx-wx*s;S.view.ty=cy-wy*s;
+}
+function zoomBy(f){
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  var g=paneGeom();
+  zoomAt(g.offsets[0]+g.paneW/2,ch/2,f);
+  requestRender();
+}
+function setZoom(s){
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  var g=paneGeom();
+  S.view.s=clamp(s,0.05,40);
+  S.view.tx=g.paneW/2-S.W*S.view.s/2;
+  S.view.ty=ch/2-S.H*S.view.s/2;
+  render();
+}
+function hitTest(mx,my){
+  var p=screenToImg(mx,my),s=S.view.s;
+  var tol=8/s;
+  var vis=allItems(),best=null,bd=1e9;
+  for(var i=0;i<vis.length;i++){
+    var it=vis[i];
+    if(!isVisible(it))continue;
+    var rx=halfX(it.w),ry=halfY(it.h);
+    var hit=(Math.abs(p.x-it.x)<=rx+tol&&Math.abs(p.y-it.y)<=ry+tol);
+    if(!hit&&it.cat==='moved'){
+      var bxr=halfX(it.wb),byr=halfY(it.hb);
+      if(Math.abs(p.x-it.bx)<=bxr+tol&&Math.abs(p.y-it.by)<=byr+tol)hit=true;
+    }
+    if(hit){
+      var dd=hypot(p.x-it.x,p.y-it.y);
+      if(dd<bd){bd=dd;best=it;}
+    }
+  }
+  return best;
+}
+function focusItem(it){
+  var cw=cv.clientWidth||600,ch=cv.clientHeight||400;
+  if(S.view.s<2.5)S.view.s=3;
+  var pane=(S.mode==='side')?((cw-GAP_CSS)/2):cw;
+  S.view.tx=pane/2-it.x*S.view.s;S.view.ty=ch/2-it.y*S.view.s;
+  S.active=it.key;highlightList();render();
+}
+function highlightList(){
+  var kids=$('list').children;
+  for(var i=0;i<kids.length;i++)kids[i].classList.toggle('act',kids[i].dataset.key===S.active);
+}
+function visibleItems(){
+  var out=[];
+  allItems().forEach(function(it){if(isVisible(it))out.push(it);});
+  return out;
+}
+function step(dir){
+  var vis=visibleItems(); if(!vis.length)return;
+  var idx=-1;
+  for(var i=0;i<vis.length;i++)if(vis[i].key===S.active){idx=i;break;}
+  idx=(idx<0)?(dir>0?0:vis.length-1):(idx+dir+vis.length)%vis.length;
+  focusItem(vis[idx]);
+}
+
+/* ==================== 手动标记：吸附焊盘轮廓 ==================== */
+function pushUndo(){
+  S.undo.push({
+    removed:Array.from(S.removed),
+    manual:S.manual.map(function(o){return {x:o.x,y:o.y,side:o.side,seq:o.seq,w:o.w,h:o.h};})
+  });
+  if(S.undo.length>200)S.undo.shift();
+}
+function undo(){
+  var s=S.undo.pop(); if(!s)return;
+  S.removed=new Set(s.removed);S.manual=s.manual;
+  $('err').textContent='已撤销一步';render();updateUI();
+}
+function removeItem(it){
+  pushUndo();
+  S.removed.add(it.key);
+  if(S.active===it.key)S.active=null;
+  $('err').textContent='已删除标记 '+(it.cat==='manual'?it.label:it.id)+'（Ctrl+Z 可撤销）';
+  render();updateUI();
+}
+function restoreKey(key){
+  pushUndo();S.removed.delete(key);
+  $('err').textContent='已恢复 1 个标记';render();updateUI();
+}
+function nextSeq(side){
+  var mx=0;
+  S.manual.forEach(function(m){if(m.side===side&&m.seq>mx)mx=m.seq;});
+  return mx+1;
+}
+function snapFind(list,x,y){
+  var best=null,bestA=1e18;
+  for(var i=0;i<list.length;i++){
+    var c=list[i];
+    if(x>=c.minx&&x<=c.maxx&&y>=c.miny&&y<=c.maxy){
+      if(c.area<bestA){bestA=c.area;best=c;}
+    }
+  }
+  if(best)return best;
+  var bd=1e9,near=null;
+  for(i=0;i<list.length;i++){
+    var c2=list[i],d=hypot(c2.x-x,c2.y-y);
+    if(d<bd){bd=d;near=c2;}
+  }
+  return (near&&bd<=14)?near:null;
+}
+function snapBox(side,x,y){
+  var list=(side==='A')?cache.snapA:cache.snapB;
+  var c=snapFind(list,x,y);
+  if(c){
+    return {
+      x:(c.minx+c.maxx)/2, y:(c.miny+c.maxy)/2,
+      w:Math.max(2,c.maxx-c.minx+1), h:Math.max(2,c.maxy-c.miny+1), snap:true
+    };
+  }
+  return {x:x,y:y,w:16,h:16,snap:false};
+}
+function addManual(x,y,side){
+  var b=snapBox(side,x,y);
+  /* 同位置判定用固定距离（不随「标记外扩」变化），避免外扩大时误取消相邻焊盘的标记 */
+  for(var i=0;i<S.manual.length;i++){
+    var o=S.manual[i];
+    if(o.side!==side)continue;
+    if(hypot(o.x-b.x,o.y-b.y)>TOGGLE_DIST)continue;
+    pushUndo();
+    var key=manKey(o);
+    if(S.removed.has(key)){S.removed.delete(key);$('err').textContent='已恢复手动标记 '+o.side+o.seq;}
+    else{S.removed.add(key);$('err').textContent='已取消手动标记 '+o.side+o.seq;}
+    render();updateUI();return;
+  }
+  pushUndo();
+  var seq=nextSeq(side);
+  S.manual.push({x:b.x,y:b.y,side:side,seq:seq,w:b.w,h:b.h});
+  $('err').textContent='已添加手动标记 '+side+seq+(b.snap?'（已吸附焊盘轮廓）':'（未找到焊盘，按默认大小）');
+  render();updateUI();
+}
+function setEditMode(m){
+  S.editMode=m;
+  $('mSel').setAttribute('aria-pressed',String(m==='select'));
+  $('mAddA').setAttribute('aria-pressed',String(m==='addA'));
+  $('mAddB').setAttribute('aria-pressed',String(m==='addB'));
+  $('mDel').setAttribute('aria-pressed',String(m==='erase'));
+  cv.className=(m==='addA'||m==='addB')?'cross':(m==='erase'?'erase':'');
+  if(m!=='addA'&&m!=='addB')S.hover=null;
+  drawOverlay();
+}
+$('mSel').onclick=function(){setEditMode('select');};
+$('mAddA').onclick=function(){setEditMode('addA');};
+$('mAddB').onclick=function(){setEditMode('addB');};
+$('mDel').onclick=function(){setEditMode('erase');};
+$('bUndo').onclick=undo;
+$('bClearEdit').onclick=function(){
+  pushUndo();S.removed=new Set();S.manual=[];
+  $('err').textContent='已清空所有手动编辑（Ctrl+Z 可撤销）';
+  render();updateUI();
+};
+$('cbGray').onchange=function(){S.grayBase=this.checked;render();};
+
+/* ==================== 滑条 + 数字输入 ==================== */
+var SLIDERS=[];
+function link(idR,idN,fn,commit){
+  var r=$(idR),n=$(idN);
+  function norm(v){
+    v=Number(v);
+    if(!isFinite(v))return null;
+    v=clamp(v,Number(r.min),Number(r.max));
+    var st=Number(r.step)||1;
+    v=Math.round(v/st)*st;
+    var dec=(String(st).indexOf('.')>=0)?String(st).split('.')[1].length:0;
+    return +v.toFixed(dec);
+  }
+  function fromNum(setNum){
+    var nv=norm(n.value);
+    if(nv===null)return;
+    r.value=nv;
+    if(setNum)n.value=nv;
+    fn(nv);
+  }
+  r.addEventListener('input',function(){n.value=r.value;fn(Number(r.value));});
+  r.addEventListener('change',function(){if(commit)commit();});
+  n.addEventListener('input',function(){fromNum(false);});
+  n.addEventListener('change',function(){fromNum(true);if(commit)commit();});
+  n.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){fromNum(true);if(commit)commit();n.blur();e.preventDefault();}
+  });
+  SLIDERS.push({r:idR,n:idN,def:Number(r.value),fn:fn});
+}
+/* 显示类：即时生效 */
+link('rgBg','nmBg',function(v){S.bgLevel=v/100;scheduleBaked();});
+link('rgPad','nmPad',function(v){S.markPad=v;render();});
+link('rgBlink','nmBlink',function(v){S.blinkMs=v;});
+link('rgGain','nmGain',function(v){S.gain=v;if(cache.pxA){rebuildDiff();render();}});
+/* 判定类：即时重算配对（轻） */
+link('rgOv','nmOv',function(v){S.overlapMin=v/100;},function(){if(S.stat)repair();});
+link('rgMove','nmMove',function(v){S.moveR=v;},function(){if(S.stat)repair();});
+/* 识别类：松手 / 回车才重算（重） */
+link('rgBr','nmBr',function(v){S.bright=v;},function(){redetect();});
+link('rgSat','nmSat',function(v){S.satMax=v/100;},function(){redetect();});
+link('rgArea','nmArea',function(v){S.minArea=v;},function(){redetect();});
+link('rgFill','nmFill',function(v){S.minFill=v/100;},function(){redetect();});
+/* 对齐微调：松手 / 回车才重算 */
+link('rgK','nmK',function(v){S.nudge.k=v/1000;},function(){redetect();});
+link('rgDx','nmDx',function(v){S.nudge.dx=v;},function(){redetect();});
+link('rgDy','nmDy',function(v){S.nudge.dy=v;},function(){redetect();});
+
+function repair(){buildItems();render();updateUI();}
+async function redetect(){
+  if(!S.A||!S.B)return;
+  busy('重新检测…');await tick();
+  applyNudge();
+  await compute();
+  fit();updateUI();
+}
+
+/* ==================== 重置设置 ==================== */
+async function resetSettings(){
+  if(!S.A||!S.B)return;
+  SLIDERS.forEach(function(d){
+    $(d.r).value=d.def;$(d.n).value=d.def;d.fn(d.def);
+  });
+  $('cbGray').checked=true;S.grayBase=true;
+  S.nudge={k:0,dx:0,dy:0};
+  S.active=null;S.hover=null;
+  setMode('side');
+  setEditMode('select');
+  $('err').textContent='设置已恢复默认，正在重新对齐与检测…';
+  busy('重置并重新检测…');await tick();
+  await computeAll();
+  $('err').textContent='设置已恢复默认（手动标记与删除记录保留）';
+}
+$('bReset').onclick=resetSettings;
+$('bZeroNudge').onclick=function(){
+  ['rgK','rgDx','rgDy'].forEach(function(id){
+    for(var i=0;i<SLIDERS.length;i++){
+      if(SLIDERS[i].r!==id)continue;
+      $(SLIDERS[i].r).value=0;$(SLIDERS[i].n).value=0;SLIDERS[i].fn(0);
+    }
+  });
+  S.nudge={k:0,dx:0,dy:0};
+  redetect();
+};
+
+/* ==================== 界面 ==================== */
+function legendHtml(){
+  return '<div><i style="background:'+COL_A+'"></i>黄：消失（图A 有，图B 无）含手动 A</div>'+
+         '<div><i style="background:'+COL_B+'"></i>绿：新增（图B 有，图A 无）含手动 B</div>'+
+         '<div><i style="background:'+COL_MOVED+'"></i>紫：移动（同一焊盘位置变了，虚线指向新位置）</div>'+
+         '<div style="color:#94a3b0">焊盘保持原色满亮度；线路按「线路亮度」'+Math.round(S.bgLevel*100)+'%（保留原色，只是变暗）</div>'+
+         '<div style="color:#94a3b0">标记贴合焊盘外接框并外扩 '+S.markPad+'px；长条形画矩形，其余画椭圆</div>'+
+         '<div style="color:#94a3b0">重叠 ≥ 阈值，或中心距离 ≤ '+S.moveR+'px 且面积相近 ⇒ 视为同一焊盘</div>'+
+         '<div style="color:#94a3b0">左键放置/选择/删除 · 右键拖动平移 · 滚轮缩放</div>';
+}
+function badge(label,color){
+  return '<span class="badge" style="background:'+color+'">'+label+'</span>';
+}
+function manList(){
+  var arr=[];
+  S.manual.forEach(function(m){
+    var key=manKey(m);
+    if(S.removed.has(key))return;
+    arr.push({cat:'manual',side:m.side,seq:m.seq,w:m.w,h:m.h,label:m.side+m.seq,
+              x:m.x,y:m.y,key:key});
+  });
+  return arr;
+}
+function countManual(side){
+  var c=0;S.manual.forEach(function(m){if(m.side===side)c++;});return c;
+}
+function updateUI(){
+  var z=S.stat;
+  if(!z)return;
+  var autoA=0,autoB=0,autoM=0;
+  S.items.forEach(function(it){
+    if(S.removed.has(it.key))return;
+    if(it.cat==='onlyA')autoA++;
+    else if(it.cat==='onlyB')autoB++;
+    else autoM++;
+  });
+  var manA=0,manB=0;
+  manList().forEach(function(m){if(m.side==='A')manA++;else manB++;});
+  var totA=z.onlyA+countManual('A'),totB=z.onlyB+countManual('B');
+
+  $('chips').innerHTML=
+    '<span class="chip on cA" data-cat="onlyA">消失 '+(autoA+manA)+'</span>'+
+    '<span class="chip on cB" data-cat="onlyB">新增 '+(autoB+manB)+'</span>'+
+    '<span class="chip on cM" data-cat="moved">移动 '+autoM+'</span>'+
+    '<span class="chip on cX" data-cat="manual">手动 '+(manA+manB)+'</span>'+
+    '<span class="chip">同一焊盘 '+z.same+'</span>';
+  Array.prototype.forEach.call($('chips').querySelectorAll('[data-cat]'),function(el){
+    el.onclick=function(){
+      var c=el.dataset.cat;
+      S.cats[c]=!S.cats[c];
+      el.classList.toggle('off',!S.cats[c]);
+      el.classList.toggle('on',S.cats[c]);
+      render();updateUI();
+    };
+  });
+
+  var al=S.align;
+  $('status').textContent=
+    '图A「'+nmA()+'」焊盘 '+z.nA+'　图B「'+nmB()+'」焊盘 '+z.nB+
+    '　判定为同一焊盘 '+z.same+'　→ 仅A有 '+totA+'　仅B有 '+totB+'　移动 '+z.moved+
+    (cache.excluded?('　[重叠区外排除 '+cache.excluded+']'):'')+
+    '　｜　对齐 scale='+al.scale.toFixed(4)+' dx='+al.dx.toFixed(1)+' dy='+al.dy.toFixed(1)+
+    ' MAD='+S.mad.toFixed(2)+(S.mad>12?'(偏大)':'')+
+    '　耗时 '+Math.round(lastMs)+'ms';
+  $('legend').innerHTML=legendHtml();
+
+  var ul=$('list');ul.innerHTML='';
+  var order={moved:0,onlyA:1,onlyB:2,manual:3};
+  var list=[];
+  S.items.forEach(function(it){if(!S.removed.has(it.key))list.push(it);});
+  manList().forEach(function(m){list.push(m);});
+  list.sort(function(p,q){
+    if(order[p.cat]!==order[q.cat])return order[p.cat]-order[q.cat];
+    return (p.y-q.y)||(p.x-q.x);
+  });
+  var frag=document.createDocumentFragment();
+  list.forEach(function(it){
+    if(!isVisible(it))return;
+    var li=document.createElement('li');
+    li.dataset.key=it.key;
+    var name=({onlyA:'消失（图A 有，图B 无）',onlyB:'新增（图B 有，图A 无）',moved:'移动'})[it.cat];
+    var label=(it.cat==='manual')?it.label:String(it.id);
+    var sub;
+    if(it.cat==='manual'){
+      name='手动标记 · '+(it.side==='A'?'消失侧 (A，黄)':'新增侧 (B，绿)');
+      sub='('+Math.round(it.x)+', '+Math.round(it.y)+')　焊盘轮廓 '+Math.round(it.w)+'×'+Math.round(it.h);
+    } else if(it.cat==='moved'){
+      sub='A('+Math.round(it.x)+','+Math.round(it.y)+') → B('+Math.round(it.bx)+','+Math.round(it.by)+
+          ')　位移 '+it.dist.toFixed(1)+'px　面积 '+it.area+'/'+it.areaB;
+    } else {
+      sub='('+Math.round(it.x)+','+Math.round(it.y)+')　面积 '+it.area;
+    }
+    li.innerHTML=badge(label,colOf(it))+'<span class="t">'+name+'<br><span class="c">'+sub+'</span></span>';
+    var xb=document.createElement('button');
+    xb.className='xbtn';xb.textContent='✕';xb.title='删除该标记';
+    xb.onclick=function(e){e.stopPropagation();removeItem(it);};
+    li.appendChild(xb);
+    li.onclick=function(){focusItem(it);};
+    frag.appendChild(li);
+  });
+  ul.appendChild(frag);
+
+  var del=$('delList');del.innerHTML='';
+  var delArr=[];
+  S.items.forEach(function(it){if(S.removed.has(it.key))delArr.push(it);});
+  S.manual.forEach(function(m){
+    var key=manKey(m);
+    if(!S.removed.has(key))return;
+    delArr.push({cat:'manual',side:m.side,seq:m.seq,w:m.w,h:m.h,label:m.side+m.seq,
+                 x:m.x,y:m.y,key:key});
+  });
+  $('delCount').textContent=delArr.length;
+  var frag2=document.createDocumentFragment();
+  delArr.forEach(function(it){
+    var nm=(it.cat==='manual')?'手动':({onlyA:'消失',onlyB:'新增',moved:'移动'})[it.cat];
+    var label=(it.cat==='manual')?it.label:String(it.id);
+    var li=document.createElement('li');
+    li.innerHTML=badge(label,colOf(it))+'<span class="t">'+nm+
+      '<br><span class="c">('+Math.round(it.x)+','+Math.round(it.y)+')</span></span>';
+    var rb=document.createElement('button');
+    rb.className='rbtn';rb.textContent='恢复';
+    rb.onclick=function(e){e.stopPropagation();restoreKey(it.key);};
+    li.appendChild(rb);
+    li.onclick=function(){focusItem(it);};
+    frag2.appendChild(li);
+  });
+  del.appendChild(frag2);
+  highlightList();
+  $('editInfo').textContent='已删除 '+S.removed.size+' · 手动 '+(manA+manB)+'（A '+manA+' / B '+manB+'）';
+}
+$('delToggle').onclick=function(){
+  var l=$('delList'),open=l.style.display==='none';
+  l.style.display=open?'block':'none';
+  this.textContent=(open?'▾':'▸')+' 已删除 '+$('delCount').textContent+' 个（点这里展开/收起）';
+};
+
+/* ==================== 模式切换 ==================== */
+function setMode(m){
+  S.mode=m;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'),function(o){
+    o.setAttribute('aria-pressed',String(o.dataset.mode===m));
+  });
+  fit();
+  updateUI();
+}
+Array.prototype.forEach.call(document.querySelectorAll('[data-mode]'),function(b){
+  b.onclick=function(){setMode(b.dataset.mode);};
+});
+
+/* ==================== 交互 ==================== */
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var r=cv.getBoundingClientRect();
+  zoomAt(e.clientX-r.left,e.clientY-r.top,Math.pow(1.0016,-e.deltaY));
+  requestRender();
+},{passive:false});
+
+cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+
+cv.addEventListener('pointerdown',function(e){
+  var r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  /* 右键 / 中键拖动平移（任何模式） */
+  if(e.button===2||e.button===1){
+    S.pan={x:mx,y:my,tx:S.view.tx,ty:S.view.ty};
+    try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    cv.classList.add('grabbing');
+    e.preventDefault();return;
+  }
+  if(e.button!==0)return;
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  if(S.mode==='swipe'&&Math.abs(mx-S.divider*r.width)<12){S.divDrag=true;return;}
+  if(S.editMode==='addA'||S.editMode==='addB'){
+    if(!cache.ready)return;
+    var p=screenToImg(mx,my);
+    addManual(p.x,p.y,S.editMode==='addA'?'A':'B');
+    return;
+  }
+  var it=hitTest(mx,my);
+  if(it){
+    if(S.editMode==='erase'){removeItem(it);return;}
+    S.active=it.key;highlightList();render();return;
+  }
+},{passive:false});
+
+cv.addEventListener('pointermove',function(e){
+  var r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(S.divDrag){S.divider=clamp(mx/r.width,0.01,0.99);requestRender();return;}
+  if(S.pan){S.view.tx=S.pan.tx+(mx-S.pan.x);S.view.ty=S.pan.ty+(my-S.pan.y);requestRender();return;}
+  if(S.editMode==='addA'||S.editMode==='addB'){
+    var p=screenToImg(mx,my);
+    var side=S.editMode==='addA'?'A':'B';
+    var b=snapBox(side,p.x,p.y);
+    S.hover={x:b.x,y:b.y,w:b.w,h:b.h,pane:p.pane};
+    drawOverlay();
+  }
+});
+cv.addEventListener('pointerleave',function(){S.hover=null;drawOverlay();});
+function endDrag(){S.divDrag=false;S.pan=null;cv.classList.remove('grabbing');}
+cv.addEventListener('pointerup',endDrag);
+cv.addEventListener('pointercancel',endDrag);
+cv.addEventListener('dblclick',function(){fit();});
+
+$('bFit').onclick=function(){fit(false);};
+$('bFill').onclick=function(){fit(true);};
+$('bOne').onclick=function(){setZoom(1);};
+$('bZoomIn').onclick=function(){zoomBy(1.25);};
+$('bZoomOut').onclick=function(){zoomBy(1/1.25);};
+$('bPrev').onclick=function(){step(-1);};
+$('bNext').onclick=function(){step(1);};
+$('bRedo').onclick=async function(){
+  if(!S.A||!S.B)return;
+  S.computed=false;S.active=null;
+  busy('重新检测…');await tick();applyNudge();await compute();
+  S.computed=true;fit();updateUI();
+};
+$('bAuto').onclick=async function(){
+  if(!S.A||!S.B)return;
+  ['rgK','nmK','rgDx','nmDx','rgDy','nmDy'].forEach(function(id){$(id).value=0;});
+  S.nudge={k:0,dx:0,dy:0};
+  busy('重新自动对齐…');await tick();
+  await computeAll();
+  $('err').textContent='已重新自动对齐';
+};
+
+window.addEventListener('keydown',function(e){
+  if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){undo();e.preventDefault();return;}
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(S.active){
+      var vis=allItems(),t0=null;
+      for(var i=0;i<vis.length;i++)if(vis[i].key===S.active)t0=vis[i];
+      if(t0){removeItem(t0);e.preventDefault();}
+    }
+    return;
+  }
+  if(e.key==='ArrowRight'){step(1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){step(-1);e.preventDefault();}
+  else if(e.key==='f'||e.key==='F'){fit();}
+  else if(e.key==='+'||e.key==='='){zoomBy(1.25);e.preventDefault();}
+  else if(e.key==='-'||e.key==='_'){zoomBy(1/1.25);e.preventDefault();}
+  else if(e.key==='0'){setZoom(1);e.preventDefault();}
+});
+window.addEventListener('resize',function(){requestRender();});
+if(window.ResizeObserver)new ResizeObserver(function(){requestRender();}).observe($('view'));
+
+/* ==================== 导出（只保留 PNG） ==================== */
+function dl(name,href){var a=document.createElement('a');a.href=href;a.download=name;a.click();}
+$('bPng').onclick=function(){
+  dl('焊盘差异.png',cv.toDataURL('image/png'));
+  $('err').textContent='已导出当前视图 PNG';
+};
+
+/* ==================== 启动 ==================== */
+async function computeAll(){
+  lastMs=0;
+  await autoAlign();
+  S.nudge={k:0,dx:0,dy:0};
+  ['rgK','nmK','rgDx','nmDx','rgDy','nmDy'].forEach(function(id){$(id).value=0;});
+  applyNudge();
+  await compute();
+  S.computed=true;
+  fit();updateUI();
+}
+(function loop(t){
+  if(S.mode==='blink'&&cache.ready){
+    var ph=Math.floor(t/S.blinkMs)%2;
+    if(ph!==S.blinkPhase){S.blinkPhase=ph;render();}
+  }
+  requestAnimationFrame(loop);
+})(0);
+setEditMode('select');
+setMode('side');
+render();
+})();
+</script>
+</body>
+</html>
